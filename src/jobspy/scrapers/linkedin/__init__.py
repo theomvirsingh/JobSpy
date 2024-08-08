@@ -40,8 +40,8 @@ from ..utils import (
 
 class LinkedInScraper(Scraper):
     base_url = "https://www.linkedin.com"
-    delay = 3
-    band_delay = 4
+    delay = 10
+    band_delay = 10
     jobs_per_page = 25
 
     def __init__(self, proxies: list[str] | str | None = None):
@@ -91,9 +91,9 @@ class LinkedInScraper(Scraper):
                     if scraper_input.job_type
                     else None
                 ),
-                "pageNum": 0,
+                "pageNum": page // 25,  # LinkedIn uses 25 results per page
                 "start": page,
-                "f_AL": "true" if scraper_input.easy_apply else None,
+                "f_AL": "true" if scraper_input.easy_apply else False,
                 "f_C": (
                     ",".join(map(str, scraper_input.linkedin_company_ids))
                     if scraper_input.linkedin_company_ids
@@ -154,10 +154,11 @@ class LinkedInScraper(Scraper):
 
             if continue_search():
                 time.sleep(random.uniform(self.delay, self.delay + self.band_delay))
-                page += len(job_list)
+                page += 1  # increment by 25 for LinkedIn pagination
 
-        job_list = job_list[: scraper_input.results_wanted]
+        job_list = job_list[:scraper_input.results_wanted]
         return JobResponse(jobs=job_list)
+
 
     def _process_job(
         self, job_card: Tag, job_id: str, full_descr: bool
